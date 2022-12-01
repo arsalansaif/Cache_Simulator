@@ -78,7 +78,7 @@ unsigned long long gettag(cache* acache, unsigned long long address){
   return tag;
 }
 
-void writeback(cache* acache, unsigned int index, unsigned int oldestway){
+void writeback(cache* acache, unsigned int index, unsigned int waynum){
   unsigned long long wordSize = sizeof(unsigned long long);
   unsigned long long address = 0;
   unsigned long long addressIndex = index << acache->numBitsForBlockOffset;
@@ -93,7 +93,7 @@ void writeback(cache* acache, unsigned int index, unsigned int oldestway){
   }
 }
 
-void fill(cache * acache, unsigned int index, unsigned int oldestway, unsigned long long address){
+void fill(cache * acache, unsigned int index, unsigned int waynum, unsigned long long address){
   unsigned long long wordSize = sizeof(unsigned long long);
   unsigned long long buildTag = acache->VATmask << acache->numBitsForIndex;
   unsigned long long buildIndex = acache->VAImask << acache->numBitsForBlockOffset;
