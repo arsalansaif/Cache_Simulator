@@ -28,12 +28,12 @@ void  setSizesOffsetsAndMaskFields(cache* acache, unsigned int size, unsigned in
   acache->numways = assoc;
   acache->blocksize = blocksize;
   acache->numsets = (size / blocksize) / assoc;
-  acache->BO = 0;
+  acache->numBitsForBlockOffset = 0;
 
   // get the log2 of blocksize
   while (blocksize >= 2) {
     blocksize /= 2;
-    acache->BO++;
+    acache->numBitsForBlockOffset++;
   }
 
   sizeIndex = 0;
@@ -52,8 +52,8 @@ void  setSizesOffsetsAndMaskFields(cache* acache, unsigned int size, unsigned in
     acache->VAImask |= ((uint64_t)1 << curBitI);
   }
 
-  acache->TO = acache->BO + sizeIndex;
-  unsigned int sizeTag = localVAbits - acache->TO;
+  acache->numBitsForIndex = acache->numBitsForBlockOffset + sizeIndex;
+  unsigned int sizeTag = localVAbits - acache->numBitsForIndex;
   acache->VATmask = 0;
 
   // create tag andmask
@@ -64,7 +64,7 @@ void  setSizesOffsetsAndMaskFields(cache* acache, unsigned int size, unsigned in
 
 unsigned long long getindex(cache* acache, unsigned long long address){
   unsigned long long index;
-  index = address >> acache->BO;
+  index = address >> acache->numBitsForBlockOffset;
   index &= acache->VAImask;
 
   return index;
@@ -72,7 +72,7 @@ unsigned long long getindex(cache* acache, unsigned long long address){
 
 unsigned long long gettag(cache* acache, unsigned long long address){
   unsigned long long tag;
-  tag = address >> acache->TO;
+  tag = address >> acache->numBitsForIndex;
   tag &= acache->VATmask;
 
   return tag;
@@ -81,8 +81,8 @@ unsigned long long gettag(cache* acache, unsigned long long address){
 void writeback(cache* acache, unsigned int index, unsigned int oldestway){
   unsigned long long wordSize = sizeof(unsigned long long);
   unsigned long long address = 0;
-  unsigned long long addressIndex = index << acache->BO;
-  unsigned long long addressTag = acache->sets[index].blocks[waynum].tag << acache->TO;
+  unsigned long long addressIndex = index << acache->numBitsForBlockOffset;
+  unsigned long long addressTag = acache->sets[index].blocks[waynum].tag << acache->numBitsForIndex;
   address |= addressIndex;
   address |= addressTag; // get address value
 
@@ -95,8 +95,8 @@ void writeback(cache* acache, unsigned int index, unsigned int oldestway){
 
 void fill(cache * acache, unsigned int index, unsigned int oldestway, unsigned long long address){
   unsigned long long wordSize = sizeof(unsigned long long);
-  unsigned long long buildTag = acache->VATmask << acache->TO;
-  unsigned long long buildIndex = acache->VAImask << acache->BO;
+  unsigned long long buildTag = acache->VATmask << acache->numBitsForIndex;
+  unsigned long long buildIndex = acache->VAImask << acache->numBitsForBlockOffset;
   unsigned long long buildTI = buildTag | buildIndex;
   address &= buildTI; // get address value
 
